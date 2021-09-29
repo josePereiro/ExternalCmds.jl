@@ -1,5 +1,9 @@
 module ExternalCmds
 
-# Write your package code here.
+    include("utils.jl")
+    include("run.jl")
+
+    export run_cmd, tee_run, run_bash
 
 end
+
