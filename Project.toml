@@ -1,7 +1,7 @@
 name = "ExternalCmds"
 uuid = "6bfc0cc1-c423-4851-8624-db00c2e00b7b"
 authors = ["josePereiro <jose.pereiro.lab@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [compat]
 julia = "1.5"
