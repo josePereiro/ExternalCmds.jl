@@ -55,7 +55,7 @@ end
 function _long_run(cmd; 
         stderr_log = tempname(), stdout_log = tempname(), 
         stdout_tee_ios = [stdout], stderr_tee_ios = [stderr],  
-        lk = ReentrantLock(), timeout = time() + 1e9,
+        printlk = ReentrantLock(), timeout = time() + 1e9,
         savetime = 60.0, # To wait for flushing
         append = false, 
         kwargs...
@@ -71,8 +71,8 @@ function _long_run(cmd;
 
         # tee
         finish_time = Ref{Float64}(time() + timeout)
-        stdout_tsk = @async _tee_file(stdout_tee_ios, stdout_log; finish_time, lk)
-        stderr_tsk = @async _tee_file(stderr_tee_ios, stderr_log; finish_time, lk)
+        stdout_tsk = @async tee_file(stdout_tee_ios, stdout_log; finish_time, printlk)
+        stderr_tsk = @async tee_file(stderr_tee_ios, stderr_log; finish_time, printlk)
 
         # ending
         wait(proc)

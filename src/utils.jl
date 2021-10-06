@@ -7,11 +7,14 @@ _empty!(fn::AbstractString) = open((io) -> print(io, ""), fn, "w")
 
 # ---------------------------------------------------------------
 # take the content of a file and print it into a set of `ios`
-function _tee_file(
-    ios::Vector, file::AbstractString;
-    finish_time::Ref{Float64}, lk::ReentrantLock,
-    append = false, wt = 1.0
-)
+function tee_file(ios::Vector, file::AbstractString;
+        print_fun = print,
+        finish_time::Ref{Float64} = Ref{Float64}(time() + 1e20),
+        buffsize = 150,
+        wtime = 1.0,
+        printlk::ReentrantLock = ReentrantLock(),
+        append = false, wt = 1.0
+    )
 
     # check
     isempty(ios) && return
@@ -19,32 +22,40 @@ function _tee_file(
     # empty
     !append && _empty!.(ios)
 
-    # tee
-    _lmtime = -1.0
-    _lli = 1
-    while (time() < finish_time[])
-        
-        # wait for news
-        (mtime(file) != _lmtime) ? 
-            _lmtime = mtime(file) : 
-            (sleep(wt); continue)
-            
-        # read
-        all_lines = readlines(file; keep = true)
-        (length(all_lines) < _lli) && continue
-
-        # print to ios
-        lock(lk) do
-            lines = all_lines[_lli:end]
-            for io in ios
-                _append(io, lines...)
+    buff = Vector{Char}(undef, buffsize)
+    bi = 0
+    open(file, "r") do fileio
+        while true
+            while eof(fileio)
+                if (bi > 0)
+                    str = join(buff[1:bi])
+                    lock(printlk) do
+                        for io in ios
+                            print_fun(io, str)
+                        end
+                    end
+                    bi = 0
+                end
+                (time() > finish_time[]) && return
+                sleep(wtime)
             end
-            _lli = lastindex(all_lines) + 1
+
+            ch = read(fileio, Char)
+            bi += 1
+            buff[bi] = ch
+            if (bi == buffsize)
+                str = join(buff)
+                lock(printlk) do
+                    for io in ios
+                        print_fun(io, str)
+                    end
+                end
+                bi = 0
+            end
         end
     end
-
-    return nothing
 end
+
 
 # ---------------------------------------------------------------
 function _try_getpid(proc)
