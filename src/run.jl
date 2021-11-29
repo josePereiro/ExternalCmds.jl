@@ -25,7 +25,7 @@ function _short_run(cmd::Cmd;
         stdout_log::AbstractString = tempname(), stderr_log::AbstractString = tempname(),
         stdout_tee_ios = [stdout], stderr_tee_ios = [stderr],
         append = false, 
-        kwargs...
+        kwargs... # to ignore foreing kwargs
     )
 
     # empty
@@ -58,7 +58,9 @@ function _long_run(cmd::Cmd;
         printlk = ReentrantLock(), timeout = time() + 1e9,
         savetime = 60.0, # To wait for flushing
         append = false, 
-        kwargs...
+        upfrec = 1.0,
+        finish_time = Ref{Float64}(time() + timeout), # define tee tout
+        kwargs... # to ignore foreing kwargs
     )
 
     # empty
@@ -70,9 +72,8 @@ function _long_run(cmd::Cmd;
         pid = _try_getpid(proc)
 
         # tee
-        finish_time = Ref{Float64}(time() + timeout)
-        stdout_tsk = @async tee_file(stdout_tee_ios, stdout_log; finish_time, printlk)
-        stderr_tsk = @async tee_file(stderr_tee_ios, stderr_log; finish_time, printlk)
+        stdout_tsk = @async tee_file(stdout_tee_ios, stdout_log; finish_time, printlk, upfrec)
+        stderr_tsk = @async tee_file(stderr_tee_ios, stderr_log; finish_time, printlk, upfrec)
 
         # ending
         wait(proc)

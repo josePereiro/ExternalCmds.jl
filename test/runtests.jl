@@ -45,7 +45,7 @@ using Test
                 sleep(1.0)
             end
             println()
-        end #for (token, long)
+        end # for (token, long)
 
         # ------------------------------------
         token = "TESTING_RUN_BASH SINGLELINE"
