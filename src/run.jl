@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------
-function run_cmd(cmd; ios = [stdout], detach = false)
+function run_cmd(cmd::Cmd; ios = [stdout], detach = false)
 
     # run
     _out = Pipe()
@@ -21,7 +21,7 @@ function run_cmd(cmd; ios = [stdout], detach = false)
 end
 
 # ---------------------------------------------------------------
-function _short_run(cmd; 
+function _short_run(cmd::Cmd;
         stdout_log::AbstractString = tempname(), stderr_log::AbstractString = tempname(),
         stdout_tee_ios = [stdout], stderr_tee_ios = [stderr],
         append = false, 
@@ -52,7 +52,7 @@ function _short_run(cmd;
 end
 
 # ---------------------------------------------------------------
-function _long_run(cmd; 
+function _long_run(cmd::Cmd; 
         stderr_log = tempname(), stdout_log = tempname(), 
         stdout_tee_ios = [stdout], stderr_tee_ios = [stderr],  
         printlk = ReentrantLock(), timeout = time() + 1e9,
@@ -86,13 +86,13 @@ function _long_run(cmd;
 end
 
 # ---------------------------------------------------------------
-function tee_run(cmd; long::Bool = false, runkwargs...)
+function tee_run(cmd::Cmd; long::Bool = false, runkwargs...)
     long ? _long_run(cmd; runkwargs...) : _short_run(cmd; runkwargs...)
 end
 
 # ---------------------------------------------------------------
 function run_bash(
-        cmds::Vector{String};
+        src_lines::Vector{String};
         startup::Vector{String} = String[],
         buff_file = tempname(),
         run_fun = run_cmd,
@@ -106,10 +106,12 @@ function run_bash(
     src = join(filter(!isempty, [
         startup; 
         rm_buff ? """rm -f '$(buff_file)';""" : ""; 
-        cmds
+        src_lines
     ]), "\n")
 
     write(buff_file, src)
 
     run_fun(`bash -c $(buff_file)`; runkwargs...)
 end
+
+run_bash(src::String; run_fun = run_cmd, runkwargs...) = run_fun(Cmd(`bash -c $(src)`); runkwargs...)

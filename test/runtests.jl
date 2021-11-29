@@ -48,7 +48,13 @@ using Test
         end #for (token, long)
 
         # ------------------------------------
-        token = "TESTING_RUN_BASH"
+        token = "TESTING_RUN_BASH SINGLELINE"
+        pid, out = run_bash("echo $(token)"; run_fun = run_cmd)
+        @test pid isa Integer
+        @test contains(out, token)
+        println()
+
+        token = "TESTING_RUN_BASH MULTILINE"
         buff_file = tempname()
         pid, out = run_bash(["echo $(token)"]; buff_file, run_fun = run_cmd, rm_buff = true)
         @test pid isa Integer

@@ -13,7 +13,7 @@ function tee_file(ios::Vector, file::AbstractString;
         buffsize = 150,
         wtime = 1.0,
         printlk::ReentrantLock = ReentrantLock(),
-        append = false, wt = 1.0
+        append = false
     )
 
     # check
